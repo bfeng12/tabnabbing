@@ -2,7 +2,7 @@ import resemble from 'resemblejs';
 
 resemble.outputSettings({
   errorColor: {red: 255, green: 0, blue: 0},
-  transparency: 1.0,
+  transparency: 0,
   scaleToSameSize: true
 });
 
@@ -31,7 +31,7 @@ function takeScreenshot() {
     const protocol = tab.url.split('://')[0];
     if (CHROME_PROTOCOLS.includes(protocol)) return;
 
-    chrome.tabs.captureVisibleTab(null, {}, function (image) { 
+    chrome.tabs.captureVisibleTab(null, {"format":"png"}, function (image) { 
       if (current_tab === -1) return;
       images[current_tab] = image;
       console.log(`screenshot taken of tab ${current_tab}`);
@@ -57,7 +57,7 @@ function handleOnActivated(activeInfo) {
     }
 
     sleep(500).then(() => {
-      chrome.tabs.captureVisibleTab(null, {}, function (image) { 
+      chrome.tabs.captureVisibleTab(null, {"format":"png"}, function (image) { 
         const file1 = images[activeInfo.tabId];
         const file2 = image;
 
@@ -65,7 +65,7 @@ function handleOnActivated(activeInfo) {
           code: `
           var a = document.createElement("a");
           a.href = "${file1}";
-          a.setAttribute("download", "file1.jpeg");
+          a.setAttribute("download", "file1.png");
           a.click();
           `
         });
@@ -73,7 +73,7 @@ function handleOnActivated(activeInfo) {
           code: `
           var a = document.createElement("a");
           a.href = "${file2}";
-          a.setAttribute("download", "file2.jpeg");
+          a.setAttribute("download", "file2.png");
           a.click();
           `
         });
@@ -94,7 +94,7 @@ function handleOnActivated(activeInfo) {
               code: `
               var a = document.createElement("a");
               a.href = "${diffImage}";
-              a.setAttribute("download", "download.jpeg");
+              a.setAttribute("download", "download.png");
               a.click();
               `
             });
