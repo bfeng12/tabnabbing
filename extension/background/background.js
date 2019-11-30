@@ -1,56 +1,102 @@
-// NOTE: run `npm run build` in the root directory of extension/ to do a webpack build b/c we are using node_modules
+import resemble from 'resemblejs';
 
-import resemble from 'resemblejs'
-const SCREENSHOT_INTERVAL = 500; // how many milliseconds for each screenshot
+resemble.outputSettings({
+  errorColor: {red: 255, green: 0, blue: 0},
+  transparency: 1.0,
+  scaleToSameSize: true
+});
 
-var currentTabId = "INIT_ID";
-var images = {} // e.g.. { tabId : image dataurl, tabId2: imagedataurl }
-var pauseScreenshots = false
+const SCREENSHOT_INTERVAL = 1000;
+const CHROME_PROTOCOLS = ['chrome', 'devtools'];
 
-function takeScreenshot() {
-  if (!pauseScreenshots) {
-    let beforeTabId = currentTabId // fix timing issue when taking screenshots between tab transition
-    chrome.tabs.captureVisibleTab(null, {}, function (image) {
-      if (pauseScreenshots || (beforeTabId != currentTabId))
-        return
-      images[currentTabId] = image;
-    })
-  }
+var current_tab = -1;
+var images = {};
+var interval; 
+
+chrome.tabs.onActivated.addListener(activeInfo => handleOnActivated(activeInfo));
+chrome.tabs.onUpdated.addListener((tabId, info) => handleOnUpdated(tabId, info));
+
+function startScreenShot() {
+  interval = setInterval(takeScreenshot, SCREENSHOT_INTERVAL);
 }
 
-// 1. While a user is browsing a webpage, take screenshots on regular intervals, always keeping the last one.
-setInterval(takeScreenshot, SCREENSHOT_INTERVAL)
+function stopScreenShot() {
+  current_tab = -1;
+  clearInterval(interval);
+  sleep(SCREENSHOT_INTERVAL);
+}
 
-// 2. Detect the change to a new tab (loss of focus).
-chrome.tabs.onActivated.addListener(function (activeInfo) {
-  pauseScreenshots = true // pause screenshotting as we transition between tabs
-  let tabId = activeInfo.tabId
-  currentTabId = tabId
+function takeScreenshot() {
+  chrome.tabs.getSelected(null, function(tab) {
+    const protocol = tab.url.split('://')[0];
+    if (CHROME_PROTOCOLS.includes(protocol)) return;
 
-  if (!images[tabId]) { // Don't do anything if new tab
-    pauseScreenshots = false
-    return
-  }
-  // 3. When a user returns to the tab, take a fresh screenshot and compare the two.
+    chrome.tabs.captureVisibleTab(null, {}, function (image) { 
+      if (current_tab === -1) return;
+      images[current_tab] = image;
+      console.log(`screenshot taken of tab ${current_tab}`);
+    });
+  });
+}
 
-  chrome.tabs.captureVisibleTab(null, {}, function (image) {
-    resemble(image).compareTo(images[tabId]).onComplete(data => {
-      let diffImage = data.getImageDataUrl()
-      console.log(data.misMatchPercentage)
-      if (data.misMatchPercentage > 10)
-        chrome.tabs.executeScript(tabId, {
-          code: `
-          var a = document.createElement("a");
-          a.href = "${diffImage}";
-          a.setAttribute("download", "download.jpeg");
-          a.click();
-          `
-        })
+function handleOnActivated(activeInfo) {
+  stopScreenShot(); 
+  console.log('handleOnActivated: service stopped');
 
-      pauseScreenshots = false
-    })
-    // takeScreenShotInterval = setInterval(takeScreenshot, SCREENSHOT_INTERVAL)
-  })
+  chrome.tabs.getSelected(null, function(tab) {
+    function leave() {
+      current_tab = activeInfo.tabId;
+      startScreenShot();
+      console.log('handleOnActivated: service started');
+    }
 
-  // takeScreenshotInterval = setInterval(takeScreenshot, SCREENSHOT_INTERVAL)
-})
+    const protocol = tab.url.split('://')[0];
+    if (CHROME_PROTOCOLS.includes(protocol)) {
+      leave();
+      return;
+    }
+
+    chrome.tabs.captureVisibleTab(null, {}, function (image) { 
+      const file1 = images[activeInfo.tabId];
+      const file2 = image;
+
+      console.log(file1);
+      console.log(file2);
+
+      if (file1 === undefined) {
+        leave();
+        return;
+      }
+
+      resemble(file1).compareTo(file2).onComplete(data => {
+        console.log(`mismatch percentage: ${data.misMatchPercentage}%`);
+        console.log(data);
+
+        let diffImage = data.getImageDataUrl();
+
+        if (data.misMatchPercentage > 0) {
+          chrome.tabs.executeScript(activeInfo.tabId, {
+            code: `
+            var a = document.createElement("a");
+            a.href = "${diffImage}";
+            a.setAttribute("download", "download.jpeg");
+            a.click();
+            `
+          });
+        }
+        leave();
+      });
+    });
+  });
+}
+
+function handleOnUpdated(tabId, info) {
+  if (info.status === 'complete') {
+    current_tab = tabId;
+    takeScreenshot();
+  } 
+}
+
+const sleep = (milliseconds) => {
+  return new Promise(resolve => setTimeout(resolve, milliseconds))
+}
