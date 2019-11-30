@@ -1,63 +1,22 @@
-const express = require('express')
-const app = express()
-const port = 3000
+const express = require('express');
+const app = express();
 
-const bodyParser = require('body-parser')
-app.use(bodyParser.json());// support parsing of application/json type post data
-app.use(bodyParser.urlencoded({ extended: true })); //support parsing of application/x-www-form-urlencoded post data
+const bodyParser = require('body-parser');
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true })); 
 
-const url = require("url");
-const db = require("./db.js")
+app.route('/blacklist').post(require('./api/blacklist'));
+app.route('/check').post(require('./api/check'));
+app.route('/reset').post(require('./api/reset'));
 
-/**
- * Add a URL to the MySQL db blacklist table.
- */
-app.post('/blacklist', (req, res, next) => {
-    let blacklistURL;
-    try {
-        blaclistURL = url.parse(req.body.url).hostname
-    } catch (err) {
-        return next(err)
-    }
+const fs = require('fs');
+try {
+    fs.writeFileSync('blacklist.txt', '[Tabnabbing Blocklist]');
+} catch (err) {
+    console.log(err);
+    process.exit(1);  
+}
 
-    let query = "INSERT INTO blacklist(url) VALUES(?)"
-    db.query(query, blacklistURL, (error, results) => {
-        if (err) {
-            console.log("error: ", error);
-            next(error)
-        } else {
-            res.send("Successfully Inserted.")
-        }
-    })
-})
-
-/**
- * Retrieve current blacklist.
- */
-app.get('/blacklist', (req, res) => {
-    db.query("SELECT url FROM blacklist", (error, results) => {
-        if(err) {
-            console.log("error: ", error);
-            next(error)
-        }
-        else {
-            res.send(results)
-        }
-    })
-})
-
-/**
- * See if url is in blacklist. Returns results from running query.
- */
-app.get('/blacklist/:url', (req, res) => {
-    let blacklistURL = req.params.url
-    db.query("SELECT url FROM blacklist WHERE url = ?", blacklistURL, (error, results) => {
-        if(err) {
-            console.log("error: ", error);
-            next(error)
-        } else {
-            res.send(results)
-        }
-    })
-})
-app.listen(port, () => console.log(`Example app listening on port ${port}!`))
+const port = 3000;
+app.listen(port);
+console.log(`app running on port ${port}`);
