@@ -56,35 +56,51 @@ function handleOnActivated(activeInfo) {
       return;
     }
 
-    chrome.tabs.captureVisibleTab(null, {}, function (image) { 
-      const file1 = images[activeInfo.tabId];
-      const file2 = image;
+    sleep(500).then(() => {
+      chrome.tabs.captureVisibleTab(null, {}, function (image) { 
+        const file1 = images[activeInfo.tabId];
+        const file2 = image;
 
-      console.log(file1);
-      console.log(file2);
+        chrome.tabs.executeScript(activeInfo.tabId, {
+          code: `
+          var a = document.createElement("a");
+          a.href = "${file1}";
+          a.setAttribute("download", "file1.jpeg");
+          a.click();
+          `
+        });
+        chrome.tabs.executeScript(activeInfo.tabId, {
+          code: `
+          var a = document.createElement("a");
+          a.href = "${file2}";
+          a.setAttribute("download", "file2.jpeg");
+          a.click();
+          `
+        });
 
-      if (file1 === undefined) {
-        leave();
-        return;
-      }
-
-      resemble(file1).compareTo(file2).onComplete(data => {
-        console.log(`mismatch percentage: ${data.misMatchPercentage}%`);
-        console.log(data);
-
-        let diffImage = data.getImageDataUrl();
-
-        if (data.misMatchPercentage > 0) {
-          chrome.tabs.executeScript(activeInfo.tabId, {
-            code: `
-            var a = document.createElement("a");
-            a.href = "${diffImage}";
-            a.setAttribute("download", "download.jpeg");
-            a.click();
-            `
-          });
+        if (file1 === undefined) {
+          leave();
+          return;
         }
-        leave();
+
+        resemble(file1).compareTo(file2).onComplete(data => {
+          console.log(`mismatch percentage: ${data.misMatchPercentage}%`);
+          console.log(data);
+
+          let diffImage = data.getImageDataUrl();
+
+          if (data.misMatchPercentage > 0) {
+            chrome.tabs.executeScript(activeInfo.tabId, {
+              code: `
+              var a = document.createElement("a");
+              a.href = "${diffImage}";
+              a.setAttribute("download", "download.jpeg");
+              a.click();
+              `
+            });
+          }
+          leave();
+        });
       });
     });
   });
