@@ -1,7 +1,7 @@
 import resemble from 'resemblejs';
 
 resemble.outputSettings({
-  errorColor: {red: 255, green: 0, blue: 0},
+  errorColor: { red: 255, green: 0, blue: 0 },
   transparency: 0,
   scaleToSameSize: true
 });
@@ -11,7 +11,7 @@ const CHROME_PROTOCOLS = ['chrome', 'devtools'];
 
 var current_tab = -1;
 var images = {};
-var interval; 
+var interval;
 
 chrome.tabs.onActivated.addListener(activeInfo => handleOnActivated(activeInfo));
 chrome.tabs.onUpdated.addListener((tabId, info) => handleOnUpdated(tabId, info));
@@ -27,11 +27,11 @@ function stopScreenShot() {
 }
 
 function takeScreenshot() {
-  chrome.tabs.getSelected(null, function(tab) {
+  chrome.tabs.getSelected(null, function (tab) {
     const protocol = tab.url.split('://')[0];
     if (CHROME_PROTOCOLS.includes(protocol)) return;
 
-    chrome.tabs.captureVisibleTab(null, {"format":"png"}, function (image) { 
+    chrome.tabs.captureVisibleTab(null, { "format": "png" }, function (image) {
       if (current_tab === -1) return;
       images[current_tab] = image;
       console.log(`screenshot taken of tab ${current_tab}`);
@@ -40,10 +40,10 @@ function takeScreenshot() {
 }
 
 function handleOnActivated(activeInfo) {
-  stopScreenShot(); 
+  stopScreenShot();
   console.log('handleOnActivated: service stopped');
 
-  chrome.tabs.getSelected(null, function(tab) {
+  chrome.tabs.getSelected(null, function (tab) {
     function leave() {
       current_tab = activeInfo.tabId;
       startScreenShot();
@@ -57,7 +57,7 @@ function handleOnActivated(activeInfo) {
     }
 
     sleep(50).then(() => {
-      chrome.tabs.captureVisibleTab(null, {"format":"png"}, function (image) { 
+      chrome.tabs.captureVisibleTab(null, { "format": "png" }, function (image) {
         const file1 = images[activeInfo.tabId];
         const file2 = image;
 
@@ -84,12 +84,18 @@ function handleOnActivated(activeInfo) {
   
                 document.body.appendChild(div);
               `
-            });  
+            });
 
-            if(confirm('TABNABBING DETECTED!\nDo you want to report this website?')) {
+            if (confirm('TABNABBING DETECTED!\nDo you want to report this website?')) {
               console.log('url sent to blacklist');
               //TODO send to blacklist
-            } 
+            } else {
+              chrome.tabs.executeScript({
+                code: `
+                document.getElementById("tabnab").remove();
+                `
+              });
+            }
           }
 
           leave();
@@ -103,7 +109,7 @@ function handleOnUpdated(tabId, info) {
   if (info.status === 'complete') {
     current_tab = tabId;
     takeScreenshot();
-  } 
+  }
 }
 
 const sleep = (milliseconds) => {
