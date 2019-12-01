@@ -9,10 +9,14 @@
 
 ## Blacklist Quick Start
 #### Option 1. Cloud Server
-1. `ip address here`
+`54.81.112.86`
+##### API Endpoints.
+- `54.81.112.86/blacklist` accepts a POST request with a parameter `url`, and blacklists that URL.
+- `54.81.112.86/check` accepts a POST request with a parameter `url`, and checks if that particular URL is blacklisted. Returns `{blacklisted: Boolean}`
+- `54.81.112.86/reset` accepts a POST request and resets the blacklist. This is used for testing purposes.
 
 #### Option 2. Setup on Local Machine
->This is only for running the server on your local machine. We have a server setup at `IP Address`.
+>This is only for running the server on your local machine. We have a server setup at `54.81.112.86`.
 >Before starting, make sure that you have NodeJS and NPM installed on your computer.
 1. `cd blacklist/`
 2. `npm i`
@@ -27,13 +31,18 @@
 ```text
 tabnabbing/
 └── blacklist/
-    ├── node_modules/
-    ├── db.js
-    ├── index.sql
-    ├── package.json
+    └── api/
+        ├── blacklist.js
+        ├── check.js
+        └── reset.js
+    ├── server.js
+    └── package.json
 └── extension/
     ├── images/
-    └── manifest.json
+    ├── background/
+    ├── background.js
+    ├── manifest.json
+    └── package.json/
 ```
 ## Creators
 - **Benny Feng**
