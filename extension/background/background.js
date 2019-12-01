@@ -85,8 +85,13 @@ function handleOnActivated(activeInfo) {
                 document.body.appendChild(div);
               `
             });  
+
+            if(confirm('TABNABBING DETECTED!\nDo you want to report this website?')) {
+              console.log('url sent to blacklist');
+              //TODO send to blacklist
+            } 
           }
-          
+
           leave();
         });
       });
