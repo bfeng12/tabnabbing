@@ -61,23 +61,6 @@ function handleOnActivated(activeInfo) {
         const file1 = images[activeInfo.tabId];
         const file2 = image;
 
-        chrome.tabs.executeScript(activeInfo.tabId, {
-          code: `
-          var a = document.createElement("a");
-          a.href = "${file1}";
-          a.setAttribute("download", "file1.png");
-          a.click();
-          `
-        });
-        chrome.tabs.executeScript(activeInfo.tabId, {
-          code: `
-          var a = document.createElement("a");
-          a.href = "${file2}";
-          a.setAttribute("download", "file2.png");
-          a.click();
-          `
-        });
-
         if (file1 === undefined) {
           leave();
           return;
@@ -87,18 +70,20 @@ function handleOnActivated(activeInfo) {
           console.log(`mismatch percentage: ${data.misMatchPercentage}%`);
           console.log(data);
 
-          let diffImage = data.getImageDataUrl();
+          chrome.tabs.executeScript({
+            code: `
+              var div = document.createElement('div');
+              div.setAttribute('id', 'tabnab');
+              div.setAttribute('style', 'position: fixed; width: 100%; height: 100%; top: 0; left: 0; right: 0; bottom: 0; z-index: 1000;');
+  
+              var img = document.createElement('img'); 
+              img.src = '${data.getImageDataUrl()}'; 
 
-          if (data.misMatchPercentage > 0) {
-            chrome.tabs.executeScript(activeInfo.tabId, {
-              code: `
-              var a = document.createElement("a");
-              a.href = "${diffImage}";
-              a.setAttribute("download", "download.png");
-              a.click();
-              `
-            });
-          }
+              div.appendChild(img);
+
+              document.body.appendChild(div);
+            `
+          });
           leave();
         });
       });
