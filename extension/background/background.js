@@ -56,7 +56,7 @@ function handleOnActivated(activeInfo) {
       return;
     }
 
-    sleep(500).then(() => {
+    sleep(50).then(() => {
       chrome.tabs.captureVisibleTab(null, {"format":"png"}, function (image) { 
         const file1 = images[activeInfo.tabId];
         const file2 = image;
@@ -70,20 +70,23 @@ function handleOnActivated(activeInfo) {
           console.log(`mismatch percentage: ${data.misMatchPercentage}%`);
           console.log(data);
 
-          chrome.tabs.executeScript({
-            code: `
-              var div = document.createElement('div');
-              div.setAttribute('id', 'tabnab');
-              div.setAttribute('style', 'position: fixed; width: 100%; height: 100%; top: 0; left: 0; right: 0; bottom: 0; z-index: 1000;');
+          if (data.misMatchPercentage > 10) {
+            chrome.tabs.executeScript({
+              code: `
+                var div = document.createElement('div');
+                div.setAttribute('id', 'tabnab');
+                div.setAttribute('style', 'position: fixed; width: 100%; height: 100%; top: 0; left: 0; right: 0; bottom: 0; z-index: 1000;');
+    
+                var img = document.createElement('img'); 
+                img.src = '${data.getImageDataUrl()}'; 
   
-              var img = document.createElement('img'); 
-              img.src = '${data.getImageDataUrl()}'; 
-
-              div.appendChild(img);
-
-              document.body.appendChild(div);
-            `
-          });
+                div.appendChild(img);
+  
+                document.body.appendChild(div);
+              `
+            });  
+          }
+          
           leave();
         });
       });
