@@ -1,4 +1,5 @@
 import resemble from 'resemblejs';
+import axios from 'axios';
 
 resemble.outputSettings({
   errorColor: { red: 255, green: 0, blue: 0 },
@@ -88,8 +89,17 @@ function handleOnActivated(activeInfo) {
             });
 
             if (confirm('TABNABBING DETECTED!\nDo you want to report this website?')) {
-              console.log('url sent to blacklist');
-              //TODO send to blacklist
+              axios.post('http://54.81.112.86/blacklist', {url: tab.url})
+                .then(function(res) {
+                  if (res.statusText === 'OK') {
+                    console.log(`${tab.url} added to blacklist`);
+                  } else {
+                    console.log(`failed to add ${tab.url} to blacklist`);
+                  }
+                })
+                .catch(function(err) {
+                  console.log(err);
+                });
             } else {
               chrome.tabs.executeScript({
                 code: `
