@@ -91,6 +91,7 @@ function handleOnActivated(activeInfo) {
             if (confirm('TABNABBING DETECTED!\nDo you want to report this website?')) {
               axios.post('http://54.81.112.86/blacklist', {url: tab.url})
                 .then(function(res) {
+                  chrome.tabs.remove(activeInfo.tabId);
                   if (res.statusText === 'OK') {
                     console.log(`${tab.url} added to blacklist`);
                   } else {
