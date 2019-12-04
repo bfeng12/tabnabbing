@@ -15,7 +15,7 @@ var images = {};
 var interval;
 
 chrome.tabs.onActivated.addListener(activeInfo => handleOnActivated(activeInfo));
-chrome.tabs.onUpdated.addListener((tabId, info) => handleOnUpdated(tabId, info));
+chrome.tabs.onUpdated.addListener((tabId, info, tab) => handleOnUpdated(tabId, info, tab));
 
 function startScreenShot() {
   interval = setInterval(takeScreenshot, SCREENSHOT_INTERVAL);
@@ -116,8 +116,21 @@ function handleOnActivated(activeInfo) {
   });
 }
 
-function handleOnUpdated(tabId, info) {
+function handleOnUpdated(tabId, info, tab) {
   if (info.status === 'complete') {
+    axios.post('http://54.81.112.86/check', {url: tab.url})
+      .then(function(res) {
+        if (res.data.blacklisted === true) {
+          console.log(`${tab.url} is on blacklist`);
+          alert('WARNING! This page has been blacklisted for tabnabbing!');
+        } else {
+          console.log(`${tab.url} is not on blacklist`);
+        }
+      })
+      .catch(function(err) {
+        console.log(err);
+      });
+
     current_tab = tabId;
     takeScreenshot();
   }
