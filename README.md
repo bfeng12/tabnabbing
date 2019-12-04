@@ -5,7 +5,7 @@
 - [Blacklist Quick start](#blacklist-quick-start)
 - [Chrome Extension Quick start](#chrome-extension-quick-start)
 - [Project Structure](#project-structure)
-- [Creators](#creators)
+- [Team](#Team:-The_Alaskan_Bull_Worms)
 
 ## Blacklist Quick Start
 #### Option 1. Cloud Server
@@ -44,7 +44,7 @@ tabnabbing/
     ├── manifest.json
     └── package.json/
 ```
-## Creators
+## Team: The_Alaskan_Bull_Worms
 - **Benny Feng**
 - **Jafree Khan**
 - **David Szenczewski**
