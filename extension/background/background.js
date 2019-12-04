@@ -122,7 +122,9 @@ function handleOnUpdated(tabId, info, tab) {
       .then(function(res) {
         if (res.data.blacklisted === true) {
           console.log(`${tab.url} is on blacklist`);
-          alert('WARNING! This page has been blacklisted for tabnabbing!');
+          if (confirm('WARNING! This page has been blacklisted for tabnabbing! Do you want to exit?')) {
+            chrome.tabs.remove(tabId);
+          }
         } else {
           console.log(`${tab.url} is not on blacklist`);
         }
