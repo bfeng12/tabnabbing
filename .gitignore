@@ -4,5 +4,5 @@ npm-debug.log
 .env
 .DS_Store
 .vscode/*
-background.js
+#background.js
 background.js.map
